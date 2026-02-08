@@ -531,6 +531,8 @@ async def entrypoint(ctx: JobContext):
     )
     
     # Generate initial reply so Sarah speaks first with greeting
+    # WAIT 5 SECONDS to allow client-side media negotiation to catch up (v1.0.2)
+    await asyncio.sleep(5)
     await session.generate_reply()
     
     print("\n🎙️  Sarah is greeting... then listening for your voice...")

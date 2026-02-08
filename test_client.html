@@ -365,7 +365,7 @@
     <audio id="agentAudio" autoplay></audio>
 
     <script>
-        console.log('Med Help USA Voice Agent - v1.0.1');
+        console.log('Med Help USA Voice Agent - v1.0.2');
         // LiveKit Configuration - Uses your .env values
         const LIVEKIT_URL = 'https://medhelp-ovaf90qb.livekit.cloud';
         const LIVEKIT_API_KEY = 'APIYf3uezu7LaX9';
@@ -483,6 +483,8 @@
         }
 
         async function toggleCall() {
+            if (callButton.disabled) return;
+
             if (isConnected) {
                 await disconnect();
             } else {
@@ -492,12 +494,19 @@
 
         async function connect() {
             try {
+                errorBanner.style.display = 'none';
                 updateStatus('connecting', 'Connecting...');
                 callButton.classList.add('active');
+                callButton.disabled = true; // Guard against multiple clicks
 
                 const LK = getLK();
                 if (!LK) {
                     throw new Error('LiveKit SDK not loaded. Please refresh the page.');
+                }
+
+                // FRESH ROOM INSTANTIATION on every attempt
+                if (room) {
+                    try { await room.disconnect(); } catch (e) { }
                 }
 
                 // Create room with better connectivity options
@@ -637,7 +646,7 @@
 
                 isConnected = true;
                 setVisualizerActive(true);
-                addTranscript('agent', 'Connected! Waiting for Sarah to greet you...');
+                addTranscript('agent', 'Connected! Sarah will greet you in a few seconds...');
 
             } catch (error) {
                 console.error('Connection error:', error);
@@ -645,6 +654,8 @@
                 updateStatus('', 'Connection failed');
                 callButton.classList.remove('active');
                 setVisualizerActive(false);
+            } finally {
+                callButton.disabled = false;
             }
         }
 
