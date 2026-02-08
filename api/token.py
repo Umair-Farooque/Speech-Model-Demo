@@ -17,13 +17,19 @@ class handler(BaseHTTPRequestHandler):
             api_secret = os.getenv("LIVEKIT_API_SECRET")
             livekit_url = os.getenv("LIVEKIT_URL", "")
             
-            # Sanitize URL: remove trailing slash and ensure https for cloud discovery
+            # Robust URL cleanup: Remove protocols, trailing slashes, and whitespace
             if livekit_url:
-                livekit_url = livekit_url.strip().rstrip('/')
-                if livekit_url.startswith('wss://'):
-                    livekit_url = livekit_url.replace('wss://', 'https://', 1)
-                elif not livekit_url.startswith('http'):
-                    livekit_url = f'https://{livekit_url}'
+                # Remove common prefixes and suffixes
+                clean_url = livekit_url.strip().lower()
+                for prefix in ['wss://', 'ws://', 'https://', 'http://']:
+                    if clean_url.startswith(prefix):
+                        clean_url = clean_url[len(prefix):]
+                
+                # Strip all trailing slashes
+                clean_url = clean_url.rstrip('/')
+                
+                # Rebuild as https for signal discovery
+                livekit_url = f'https://{clean_url}'
             
             if not api_key or not api_secret:
                 self.send_response(500)

@@ -363,8 +363,8 @@
     </div>
 
     <audio id="agentAudio" autoplay></audio>
-
     <script>
+        console.log('Med Help USA Voice Agent - v1.0.1');
         // LiveKit Configuration - Uses your .env values
         const LIVEKIT_URL = 'https://medhelp-ovaf90qb.livekit.cloud';
         const LIVEKIT_API_KEY = 'APIYf3uezu7LaX9';
@@ -444,6 +444,17 @@
                     bar.classList.remove('active');
                 }
             });
+        }
+
+        // Robust URL normalization to prevent double slashes and protocol issues
+        function normalizeLiveKitUrl(url) {
+            if (!url) return url;
+            // Remove all variants of protocols
+            let clean = url.trim().replace(/^(wss:\/\/|ws:\/\/|https:\/\/|http:\/\/)/i, '');
+            // Remove all trailing slashes (aggressive)
+            clean = clean.replace(/\/+$/, '');
+            // Always return as https for discovery
+            return `https://${clean}`;
         }
 
         // Simple JWT generation for demo (in production, use a backend)
@@ -554,14 +565,8 @@
                     if (resp.ok) {
                         const data = await resp.json();
                         token = data.token;
-                        // Sanitize URL from server
-                        wsUrl = data.url || LIVEKIT_URL;
-                        if (wsUrl) {
-                            wsUrl = wsUrl.replace(/\/+$/, ''); // Remove trailing slashes
-                            if (wsUrl.startsWith('wss://')) {
-                                wsUrl = wsUrl.replace('wss://', 'https://');
-                            }
-                        }
+                        // Aggressively sanitize URL from server or fallback
+                        wsUrl = normalizeLiveKitUrl(data.url || LIVEKIT_URL);
                         console.log('Token fetched from server. URL:', wsUrl);
                     } else {
                         console.warn('Token server returned error:', resp.status);
