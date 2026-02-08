@@ -350,7 +350,9 @@ async def entrypoint(ctx: JobContext):
     intake_data = HomeCareIntakeData()
 
     # Connect with AUDIO_ONLY and smarter subscription
+    logger.info(f"Connecting to room {ctx.room.name}...")
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    logger.info(f"Connected to room {ctx.room.name}. Waiting for participant...")
 
     # =============================================================================
     # INITIALIZE OPENAI REALTIME MODEL - NATIVE STREAMING WITH BUILT-IN VAD
