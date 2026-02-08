@@ -15,7 +15,15 @@ class handler(BaseHTTPRequestHandler):
             
             api_key = os.getenv("LIVEKIT_API_KEY")
             api_secret = os.getenv("LIVEKIT_API_SECRET")
-            livekit_url = os.getenv("LIVEKIT_URL")
+            livekit_url = os.getenv("LIVEKIT_URL", "")
+            
+            # Sanitize URL: remove trailing slash and ensure https for cloud discovery
+            if livekit_url:
+                livekit_url = livekit_url.strip().rstrip('/')
+                if livekit_url.startswith('wss://'):
+                    livekit_url = livekit_url.replace('wss://', 'https://', 1)
+                elif not livekit_url.startswith('http'):
+                    livekit_url = f'https://{livekit_url}'
             
             if not api_key or not api_secret:
                 self.send_response(500)

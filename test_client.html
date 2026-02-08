@@ -366,7 +366,7 @@
 
     <script>
         // LiveKit Configuration - Uses your .env values
-        const LIVEKIT_URL = 'wss://medhelp-ovaf90qb.livekit.cloud';
+        const LIVEKIT_URL = 'https://medhelp-ovaf90qb.livekit.cloud';
         const LIVEKIT_API_KEY = 'APIYf3uezu7LaX9';
         const LIVEKIT_API_SECRET = '1Kp7oAuryJv8ufGL2f0ERqfPLleJ57djE1IcfNY41tQC';
 
@@ -554,8 +554,15 @@
                     if (resp.ok) {
                         const data = await resp.json();
                         token = data.token;
+                        // Sanitize URL from server
                         wsUrl = data.url || LIVEKIT_URL;
-                        console.log('Token fetched from server');
+                        if (wsUrl) {
+                            wsUrl = wsUrl.replace(/\/+$/, ''); // Remove trailing slashes
+                            if (wsUrl.startsWith('wss://')) {
+                                wsUrl = wsUrl.replace('wss://', 'https://');
+                            }
+                        }
+                        console.log('Token fetched from server. URL:', wsUrl);
                     } else {
                         console.warn('Token server returned error:', resp.status);
                     }
