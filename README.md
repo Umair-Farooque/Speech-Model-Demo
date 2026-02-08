@@ -1,124 +1,165 @@
-# Speech-to-Speech Voice Agent Demo
+# Med Help USA - Senior Care Voice Intake Agent
 
-A real-time voice-to-voice AI assistant powered by LiveKit, OpenAI Whisper (STT), GPT-4o-mini (LLM), and OpenAI TTS.
+A LiveKit-based AI voice agent for Med Help USA that handles senior care intake calls with empathy and professionalism. The agent ("Sarah") speaks naturally, collects lead information, and saves it to Supabase.
+
+## 🌟 Features
+
+- **Natural Voice Interaction** - Uses OpenAI Realtime API for human-like conversation
+- **Multi-Language Support** - English, Spanish, Arabic, French, Hindi, Italian
+- **Senior-Friendly Design** - Slow speech, patient listening, clear confirmations
+- **Spell-Back Verification** - Confirms names, phone numbers, and emails letter-by-letter
+- **Supabase Integration** - Automatically saves intake leads to database
+- **Emergency Protocol** - Detects emergencies and directs callers to 911
+
+## 📋 Prerequisites
+
+Before running this project, ensure you have:
+
+- **Python 3.10+** (tested on Python 3.14)
+- **OpenAI API Key** with Realtime API access
+- **Supabase Account** (free tier works)
+- **LiveKit Server** (local development server)
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.9 or higher
-- Valid OpenAI API key
-- LiveKit Cloud account (or use the demo instance)
-
-### Installation
-
-1. **Clone the repository** (if not already done)
-
-2. **Create a virtual environment**
+### Step 1: Clone & Navigate
 ```bash
-python -m venv .venv
-.venv\Scripts\activate  # On Windows
+cd medicare-01
 ```
 
-3. **Install dependencies**
+### Step 2: Install Python Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Configure environment variables**
-   - Copy `.env.example` to `.env`
-   - Add your actual API keys:
-     ```
-     LIVEKIT_URL=wss://your-livekit-instance.livekit.cloud
-     LIVEKIT_API_KEY=your_api_key_here
-     LIVEKIT_API_SECRET=your_api_secret_here
-     OPENAI_API_KEY=sk-proj-your_openai_api_key_here
-     ```
+### Step 3: Download LiveKit Server
+1. Go to: https://github.com/livekit/livekit/releases
+2. Download the latest release for your OS:
+   - **Windows**: `livekit_X.X.X_windows_amd64.zip`
+   - **macOS**: `livekit_X.X.X_darwin_amd64.tar.gz`
+   - **Linux**: `livekit_X.X.X_linux_amd64.tar.gz`
+3. Extract and place `livekit-server` executable in project folder
 
-### Running the Demo
+### Step 4: Create Environment File
+Create a `.env` file in the project root:
 
-You need to run **TWO processes** in separate terminal windows:
+```env
+# OpenAI API Key (Required)
+OPENAI_API_KEY=sk-your-openai-api-key-here
 
-**Terminal 1 - Token Server (Backend)**
+# Supabase Credentials (Required)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+```
+
+### Step 5: Setup Supabase Table (First Time Only)
 ```bash
-python services/token_server.py
+python supabase_setup.py
 ```
-This starts the FastAPI server on `http://localhost:8000`
+Follow the on-screen instructions to create the `save_intake_lead` table in your Supabase dashboard.
 
-**Terminal 2 - Voice Agent**
+### Step 6: Start LiveKit Server
+Open a terminal and run:
 ```bash
-python agent/main.py start
-```
-This starts the LiveKit voice agent
+# Windows
+.\livekit-server.exe --dev
 
-**Terminal 3 - Open the Frontend**
-Open your browser to: `http://localhost:8000`
-
-## 🎯 How It Works
-
-1. **User clicks "Start Conversation"**
-2. Frontend fetches a LiveKit token from the backend
-3. Connects to LiveKit room with voice capabilities enabled
-4. Voice Agent processes:
-   - Speech → Text (OpenAI Whisper STT)
-   - Text → AI Response (GPT-4o-mini)
-   - AI Response → Speech (OpenAI TTS)
-5. Real-time bidirectional voice conversation!
-
-## 🛠️ Architecture
-
-```
-frontend/
-  ├── index.html      # Main UI
-  ├── app.js          # LiveKit client logic
-  └── styles.css      # Glassmorphism design
-
-agent/
-  ├── main.py         # Voice agent entrypoint
-  ├── config.py       # Configuration management
-  ├── prompts.py      # System prompts
-  └── memory.py       # Conversation memory
-
-services/
-  ├── token_server.py # FastAPI server for tokens
-  ├── llm.py         # OpenAI LLM configuration
-  ├── stt.py         # Speech-to-Text service
-  └── tts.py         # Text-to-Speech service
+# macOS/Linux
+./livekit-server --dev
 ```
 
-## 🔐 Security Notes
+### Step 7: Run the Voice Agent
+In a new terminal:
+```bash
+python main.py console
+```
 
-- **Never commit `.env` file** - it contains your API keys
-- Use `.env.example` as a template only
-- Regenerate API keys if accidentally exposed
-- For production, use proper secrets management
+## 📁 Project Structure
 
-## 🎨 Features
+```
+medicare-01/
+├── main.py                 # Entry point - starts the voice agent
+├── requirements.txt        # Python dependencies
+├── supabase_client.py      # Supabase database client
+├── supabase_setup.py       # Database table setup script
+├── .env                    # Environment variables (create this)
+├── agent/
+│   ├── __init__.py
+│   └── intake_agent.py     # Main agent logic & conversation flow
+└── README.md               # This file
+```
 
-- ✅ Real-time voice-to-voice interaction
-- ✅ Visual feedback (orb animation when speaking)
-- ✅ Connection status indicators
-- ✅ Disconnect functionality
-- ✅ Error handling and user feedback
-- ✅ Conversation memory (10 turns)
-- ✅ Modern glassmorphism UI
+## 🔧 Configuration
 
-## 🐛 Troubleshooting
+### Environment Variables
 
-**Connection Failed**
-- Verify your `.env` file has correct API keys
-- Ensure both servers are running
-- Check browser console for errors
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `OPENAI_API_KEY` | Your OpenAI API key | Yes |
+| `SUPABASE_URL` | Your Supabase project URL | Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
 
-**No Audio**
-- Check microphone permissions in browser
-- Verify audio output is working
-- Check LiveKit connection status
+### Agent Settings (in `agent/intake_agent.py`)
 
-**Agent Not Responding**
-- Check Terminal 2 for agent logs
-- Verify OpenAI API key is valid
-- Ensure agent process started successfully
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `AGENT_VOICE_NAME` | `shimmer` | OpenAI voice (warm, female) |
+| `SENIOR_PAUSE_THRESHOLD` | `0.8` | Seconds to wait before responding |
+
+## 📞 Conversation Flow
+
+The agent follows this structured flow:
+
+1. **Warm Opener** - Greets caller, offers language options
+2. **Safety Check** - Collects name and callback number (with spell-back)
+3. **Deep Empathy** - Listens to caller's situation with validation
+4. **Solution Pitch** - Explains Med Help USA services
+5. **Email Collection** - Gets email for follow-up (with spell-back)
+6. **Assessment** - 3 quick health questions (mobility, cognition, hygiene)
+7. **Closing** - Confirms next steps, saves lead to database
+
+## 🗄️ Database Schema
+
+The `save_intake_lead` table stores:
+- Caller name & callback number
+- Language preference
+- Email address & SMS consent
+- Care recipient (self/loved one)
+- Age group & health assessment
+- Situation notes & timestamps
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+| Error | Solution |
+|-------|----------|
+| `Missing Supabase credentials` | Create `.env` file with SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY |
+| `OpenAI API key not found` | Add OPENAI_API_KEY to `.env` file |
+| `Cannot connect to LiveKit` | Make sure livekit-server is running with `--dev` flag |
+| `Module not found` | Run `pip install -r requirements.txt` |
+| `Table does not exist` | Run `python supabase_setup.py` and create table in Supabase |
+
+### Checking Your Setup
+```bash
+# Verify Python version (need 3.10+)
+python --version
+
+# Verify packages installed
+pip list | grep livekit
+
+# Test Supabase connection
+python supabase_setup.py
+```
 
 ## 📝 License
 
-MIT
+See [LICENSE](LICENSE) file.
+
+## 🏢 About Med Help USA
+
+Med Help USA provides premium private-pay senior care services, established in 2009. Based in Royal Oak, Michigan, serving families nationwide.
+
+---
+
+**Need Help?** Visit [MedHelpUSA.com](https://medhelpusa.com) or contact the development team.

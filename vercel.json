@@ -1,0 +1,13 @@
+{
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/token",
+            "destination": "/api/token.py"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/public/$1"
+        }
+    ]
+}

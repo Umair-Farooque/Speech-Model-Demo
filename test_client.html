@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Med Help USA - Voice Agent Demo</title>
+    <!-- LiveKit SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.9.7/dist/livekit-client.umd.min.js"
+        onload="console.log('LiveKit Script Loaded')"
+        onerror="showError('Failed to load LiveKit SDK from CDN')"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 12px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+            box-shadow: 0 0 12px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connecting {
+            background: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .status-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .call-button {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            transition: all 0.3s ease;
+            position: relative;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 10px 40px rgba(37, 99, 235, 0.4);
+        }
+
+        .call-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 50px rgba(37, 99, 235, 0.5);
+        }
+
+        .call-button:active {
+            transform: scale(0.98);
+        }
+
+        .call-button.active {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 10px 60px rgba(239, 68, 68, 0.6);
+            }
+        }
+
+        .call-button svg {
+            width: 48px;
+            height: 48px;
+            fill: white;
+            transition: transform 0.3s ease;
+        }
+
+        .call-button.active svg {
+            transform: rotate(135deg);
+        }
+
+        .visualizer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 60px;
+            margin-bottom: 24px;
+        }
+
+        .bar {
+            width: 4px;
+            background: linear-gradient(180deg, var(--primary) 0%, #a78bfa 100%);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+            height: 8px;
+        }
+
+        .bar.active {
+            animation: wave 0.5s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+
+            0%,
+            100% {
+                height: 8px;
+            }
+
+            50% {
+                height: 40px;
+            }
+        }
+
+        .bar:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .bar:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .bar:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .bar:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .bar:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+
+        .bar:nth-child(6) {
+            animation-delay: 0.3s;
+        }
+
+        .bar:nth-child(7) {
+            animation-delay: 0.2s;
+        }
+
+        .bar:nth-child(8) {
+            animation-delay: 0.1s;
+        }
+
+        .transcript {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid var(--border);
+        }
+
+        .transcript-entry {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .transcript-entry:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .transcript-entry.user {
+            color: #60a5fa;
+        }
+
+        .transcript-entry.agent {
+            color: #a78bfa;
+        }
+
+        .transcript-label {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
+
+        .instructions {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .error-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #fca5a5;
+            display: none;
+        }
+
+        audio {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <h1>🏥 Med Help USA</h1>
+                <p>Senior Care Voice Agent Demo</p>
+            </div>
+
+            <div class="error-banner" id="errorBanner"></div>
+
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Ready to connect</span>
+            </div>
+
+            <div id="sarahStatus" class="status-indicator"
+                style="background: rgba(167, 139, 250, 0.1); border-color: rgba(167, 139, 250, 0.2); margin-top: -16px; margin-bottom: 24px;">
+                <div class="status-dot" id="sarahDot" style="background: var(--text-muted);"></div>
+                <span class="status-text" id="sarahText">Sarah is not in the room</span>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button onclick="testSound()"
+                    style="background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer;">
+                    🔊 Test Browser Sound
+                </button>
+            </div>
+
+            <button class="call-button" id="callButton" onclick="toggleCall()">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
+                </svg>
+            </button>
+
+            <div class="visualizer" id="visualizer">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+
+            <div class="transcript" id="transcript">
+                <div style="color: var(--text-muted); text-align: center;">
+                    Click the button above to start talking with Sarah
+                </div>
+            </div>
+
+            <p class="instructions">
+                🎤 Allow microphone access when prompted<br>
+                🔊 Make sure your speakers are on
+            </p>
+        </div>
+    </div>
+
+    <audio id="agentAudio" autoplay></audio>
+
+    <script>
+        // LiveKit Configuration - Uses your .env values
+        const LIVEKIT_URL = 'wss://medhelp-ovaf90qb.livekit.cloud';
+        const LIVEKIT_API_KEY = 'APIYf3uezu7LaX9';
+        const LIVEKIT_API_SECRET = '1Kp7oAuryJv8ufGL2f0ERqfPLleJ57djE1IcfNY41tQC';
+
+        // Get LiveKit client - check different possible global names
+        function getLK() {
+            const lk = window.LivekitClient || window.livekit || window.Livekit;
+            console.log('LiveKit SDK Check:', lk ? 'Found' : 'NOT FOUND');
+            return lk;
+        }
+
+        if (!getLK()) {
+            console.warn('LiveKit SDK not immediately available');
+        }
+
+        let room = null;
+        let isConnected = false;
+        let localAudioTrack = null;
+
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const sarahDot = document.getElementById('sarahDot');
+        const sarahText = document.getElementById('sarahText');
+        const callButton = document.getElementById('callButton');
+        const visualizer = document.getElementById('visualizer');
+        const transcript = document.getElementById('transcript');
+        const errorBanner = document.getElementById('errorBanner');
+        const agentAudio = document.getElementById('agentAudio');
+        const bars = visualizer.querySelectorAll('.bar');
+
+        function testSound() {
+            const osc = new (window.AudioContext || window.webkitAudioContext)();
+            const o = osc.createOscillator();
+            const g = osc.createGain();
+            o.connect(g);
+            g.connect(osc.destination);
+            o.start(0);
+            g.gain.exponentialRampToValueAtTime(0.00001, osc.currentTime + 1);
+            o.stop(osc.currentTime + 1);
+            console.log('Test sound played');
+        }
+
+        function showError(message) {
+            errorBanner.textContent = message;
+            errorBanner.style.display = 'block';
+            setTimeout(() => errorBanner.style.display = 'none', 5000);
+        }
+
+        function updateStatus(status, message) {
+            statusDot.className = 'status-dot ' + status;
+            statusText.textContent = message;
+        }
+
+        function addTranscript(role, text) {
+            const entry = document.createElement('div');
+            entry.className = `transcript-entry ${role}`;
+            entry.innerHTML = `
+                <div class="transcript-label">${role === 'user' ? '🎤 You' : '👩 Sarah'}</div>
+                <div>${text}</div>
+            `;
+
+            // Remove placeholder if exists
+            if (transcript.querySelector('[style*="text-align: center"]')) {
+                transcript.innerHTML = '';
+            }
+
+            transcript.appendChild(entry);
+            transcript.scrollTop = transcript.scrollHeight;
+        }
+
+        function setVisualizerActive(active) {
+            bars.forEach(bar => {
+                if (active) {
+                    bar.classList.add('active');
+                } else {
+                    bar.classList.remove('active');
+                }
+            });
+        }
+
+        // Simple JWT generation for demo (in production, use a backend)
+        function generateToken(identity, roomName) {
+            // This is a simplified token for demo purposes
+            // In production, generate this on your backend
+            const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+            const now = Math.floor(Date.now() / 1000);
+            const payload = btoa(JSON.stringify({
+                iss: LIVEKIT_API_KEY,
+                sub: identity,
+                iat: now,
+                exp: now + 3600,
+                video: {
+                    room: roomName,
+                    roomJoin: true,
+                    canPublish: true,
+                    canSubscribe: true
+                }
+            }));
+
+            // Note: This won't work for actual authentication - need backend
+            // For demo, we'll use a pre-generated token or backend endpoint
+            return `${header}.${payload}.demo`;
+        }
+
+        async function toggleCall() {
+            if (isConnected) {
+                await disconnect();
+            } else {
+                await connect();
+            }
+        }
+
+        async function connect() {
+            try {
+                updateStatus('connecting', 'Connecting...');
+                callButton.classList.add('active');
+
+                const LK = getLK();
+                if (!LK) {
+                    throw new Error('LiveKit SDK not loaded. Please refresh the page.');
+                }
+
+                // Create room with better connectivity options
+                room = new LK.Room({
+                    adaptiveStream: true,
+                    dynacast: true,
+                    audioCaptureDefaults: {
+                        autoGainControl: true,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                    },
+                    // Optimized for maximum stability
+                    publishDefaults: {
+                        dtx: false,       // Disabled DTX to prevent jitter/clipping
+                        red: true,        // Keep redundancy for network protection
+                        simulcast: false,
+                    },
+                    // Aggressive ICE strategy
+                    connectOptions: {
+                        autoSubscribe: true,
+                    }
+                });
+
+                // Set up event handlers
+                room.on(LK.RoomEvent.TrackSubscribed, handleTrackSubscribed);
+                room.on(LK.RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
+                room.on(LK.RoomEvent.Disconnected, (reason) => {
+                    console.log('%c Disconnected from room: ' + reason, 'color: orange; font-weight: bold');
+                    handleDisconnected();
+                });
+                room.on(LK.RoomEvent.DataReceived, handleDataReceived);
+                room.on(LK.RoomEvent.Reconnecting, () => {
+                    console.log('Reconnecting to room...');
+                    updateStatus('connecting', 'Reconnecting...');
+                });
+                room.on(LK.RoomEvent.Reconnected, () => {
+                    console.log('Reconnected to room');
+                    updateStatus('connected', 'Reconnected');
+                });
+                room.on(LK.RoomEvent.ParticipantConnected, (p) => {
+                    console.log('Participant connected:', p.identity);
+                    handleParticipantUpdate();
+                });
+                room.on(LK.RoomEvent.ParticipantDisconnected, (p) => {
+                    console.log('Participant disconnected:', p.identity);
+                    handleParticipantUpdate();
+                });
+
+                // Generate unique room name
+                const roomName = 'demo-room';
+                const identity = 'web-user-' + Math.random().toString(36).substr(2, 6);
+
+                let token;
+                let wsUrl = LIVEKIT_URL;
+
+                // Try to get token from local server first
+                console.log('Fetching token from server...');
+                updateStatus('connecting', 'Fetching token...');
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                    const resp = await fetch(`/token?room=${roomName}&identity=${identity}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        token = data.token;
+                        wsUrl = data.url || LIVEKIT_URL;
+                        console.log('Token fetched from server');
+                    } else {
+                        console.warn('Token server returned error:', resp.status);
+                    }
+                } catch (e) {
+                    console.log('Local server fetch failed or timed out:', e.message);
+                }
+
+                // If no token from server, prompt user
+                if (!token) {
+                    console.log('No token found, prompting user...');
+                    updateStatus('connecting', 'Action required: Check for token prompt');
+                    token = prompt(
+                        'Enter your LiveKit token:\n\n' +
+                        'Generate one using:\n' +
+                        '.\\.venv\\Scripts\\python.exe generate_token.py ' + roomName
+                    );
+                }
+
+                if (!token) {
+                    throw new Error('Token required to connect');
+                }
+
+                // Start audio context immediately before connect
+                console.log('Starting AudioContext...');
+                updateStatus('connecting', 'Initializing audio...');
+                console.time('Latency: AudioContext Start');
+                try {
+                    await room.startAudio();
+                    console.timeEnd('Latency: AudioContext Start');
+                    console.log('AudioContext started successfully');
+                } catch (e) {
+                    console.error('Failed to start AudioContext:', e);
+                }
+
+                console.log('Connecting to LiveKit...');
+                updateStatus('connecting', 'Connecting to room...');
+                console.time('Latency: RTC Connect');
+                // Use fast connect with minimal options
+                await room.connect(wsUrl, token, {
+                    autoSubscribe: true,
+                });
+                console.timeEnd('Latency: RTC Connect');
+                console.log('Connected to room:', room.name);
+
+                updateStatus('connected', 'Connected - Initializing microphone...');
+
+                // Publish microphone after connection is established
+                try {
+                    console.log('Creating local audio track...');
+                    localAudioTrack = await LK.createLocalAudioTrack({
+                        autoGainControl: true,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                    });
+
+                    console.log('Local audio track created, publishing...');
+                    await room.localParticipant.publishTrack(localAudioTrack);
+                    console.log('Local audio track published successfully');
+
+                    updateStatus('connected', 'Connected - Speak now');
+                } catch (micError) {
+                    console.warn('Microphone error (Sarah may still work):', micError);
+                    addTranscript('agent', '⚠️ Microphone blocked or not found. You can listen, but Sarah won\'t hear you.');
+                    updateStatus('connected', 'Connected (Listen only)');
+                }
+
+                isConnected = true;
+                setVisualizerActive(true);
+                addTranscript('agent', 'Connected! Waiting for Sarah to greet you...');
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                showError('Connection failed: ' + error.message);
+                updateStatus('', 'Connection failed');
+                callButton.classList.remove('active');
+                setVisualizerActive(false);
+            }
+        }
+
+        async function disconnect() {
+            if (room) {
+                await room.disconnect();
+            }
+            handleDisconnected();
+        }
+
+        function handleDisconnected() {
+            isConnected = false;
+            room = null;
+            localAudioTrack = null;
+
+            callButton.classList.remove('active');
+            updateStatus('', 'Disconnected');
+            setVisualizerActive(false);
+        }
+
+        function handleParticipantUpdate() {
+            if (!room) return;
+            const participants = Array.from(room.remoteParticipants.values());
+            console.log('Current participants:', participants.map(p => p.identity));
+
+            const hasAgent = participants.some(p =>
+                p.identity.toLowerCase().includes('agent') ||
+                p.identity.toLowerCase().includes('intake') ||
+                p.identity.toLowerCase().includes('sarah')
+            );
+
+            if (hasAgent) {
+                sarahDot.style.background = 'var(--success)';
+                sarahDot.style.boxShadow = '0 0 12px var(--success)';
+                sarahText.textContent = 'Sarah is in the room';
+            } else {
+                sarahDot.style.background = 'var(--text-muted)';
+                sarahDot.style.boxShadow = 'none';
+                sarahText.textContent = 'Sarah is not here (Waiting for agent...)';
+
+                if (participants.length > 0) {
+                    console.log('Other users here, but no agent yet');
+                }
+            }
+        }
+
+        function handleTrackSubscribed(track, publication, participant) {
+            console.log('Track subscribed:', track.kind, 'from', participant.identity);
+            handleParticipantUpdate();
+
+            if (track.kind === 'audio') {
+                console.time('Latency: Audio Playback');
+                // Attach to the dedicated agentAudio element for stability
+                track.attach(agentAudio);
+                console.log('Audio track attached to #agentAudio');
+
+                // Aggressive play attempt
+                agentAudio.play().then(() => {
+                    console.timeEnd('Latency: Audio Playback');
+                    console.log('Audio playing successfully');
+                }).catch(e => {
+                    console.warn('Playback blocked, waiting for interaction');
+                    showError('Click anywhere to enable Sarah\'s voice');
+                    const resumeAll = () => {
+                        agentAudio.play();
+                        room.startAudio();
+                    };
+                    window.addEventListener('click', resumeAll, { once: true });
+                });
+
+                if (participant.identity.toLowerCase().includes('agent') ||
+                    participant.identity.toLowerCase().includes('sarah')) {
+                    addTranscript('agent', '🔊 Sarah is joined the room and is speaking.');
+                }
+            }
+        }
+
+        function handleTrackUnsubscribed(track) {
+            track.detach().forEach(element => element.remove());
+        }
+
+        function handleDataReceived(data, participant) {
+            try {
+                const message = JSON.parse(new TextDecoder().decode(data));
+                if (message.type === 'transcript') {
+                    addTranscript(message.role, message.text);
+                }
+            } catch (e) {
+                console.log('Data received:', data);
+            }
+        }
+
+        // Initialize
+        console.log('Med Help USA Voice Agent Demo loaded');
+        console.log('LiveKit URL:', LIVEKIT_URL);
+    </script>
+</body>
+
+</html>
